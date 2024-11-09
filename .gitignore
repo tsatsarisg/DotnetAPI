@@ -1,0 +1,50 @@
+﻿# Build artifacts
+bin/
+obj/
+
+# User-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Mono auto generated files
+mono_crash.*
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# C# project files
+*.csproj.user
+*.csproj.DotSettings
+
+# Visual Studio cache
+.vs/
+
+# JetBrains Rider specific files
+.idea/
+*.sln.iml
+.Rider*/
+
+# Debugging files
+*.pdb
+
+# Logs
+*.log
+
+# Publish output
+.publish/
+
+# Package files
+*.nupkg
+*.snupkg
+
+# Optional: Node.js dependencies for front-end in ASP.NET Core
+node_modules/
