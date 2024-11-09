@@ -1,4 +1,5 @@
 ﻿using DotnetAPI.Data;
+using DotnetAPI.DTOS;
 using DotnetAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -72,9 +73,44 @@ public class UserController : ControllerBase
         throw new Exception("Failed to update user");
     }
 
-    [HttpPost]
-    public ActionResult<User> AddUser()
+    [HttpPost("AddUser")]
+    public IActionResult AddUser(UserDto user)
     {
-        return Ok();
+        string sql = @"INSERT INTO TutorialAppSchema.Users(
+                [FirstName],
+                [LastName],
+                [Email],
+                [Gender],
+                [Active]
+            ) VALUES (" +
+                     "'" + user.FirstName + 
+                     "', '" + user.LastName +
+                     "', '" + user.Email + 
+                     "', '" + user.Gender + 
+                     "', '" + user.Active + 
+                     "')";
+        
+
+        if (_dapper.ExecuteSingle(sql))
+        {
+            return Ok();
+        } 
+
+        throw new Exception("Failed to Add User");
+    }
+    
+    [HttpDelete("DeleteUser/{userId}")]
+    public IActionResult DeleteUser(int userId)
+    {
+        string sql = @"
+            DELETE FROM TutorialAppSchema.Users 
+                WHERE UserId = " + userId.ToString();
+        
+        if (_dapper.ExecuteSingle(sql))
+        {
+            return Ok();
+        } 
+
+        throw new Exception("Failed to Delete User");
     }
 }
