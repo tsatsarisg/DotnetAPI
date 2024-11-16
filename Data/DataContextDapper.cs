@@ -38,25 +38,22 @@ public class DataContextDapper
         IDbConnection dbConnection = new SqlConnection(_connectionString);
         return dbConnection.Execute(sql);
     }
-    
-    public bool ExecuteSqlWithParameters(string sql, List<SqlParameter> parameters)
+
+    public bool ExecuteSqlWithParameters(string sql, DynamicParameters parameters)
     {
-        SqlCommand commandWithParams = new SqlCommand(sql);
+        IDbConnection dbConnection = new SqlConnection(_connectionString);
+        return dbConnection.Execute(sql, parameters) > 0;
+    }
+    
+    public IEnumerable<T> LoadDataWithParameters<T>(string sql, DynamicParameters parameters)
+    {
+        IDbConnection dbConnection = new SqlConnection(_connectionString);
+        return dbConnection.Query<T>(sql, parameters);
+    }
 
-        foreach(SqlParameter parameter in parameters)
-        {
-            commandWithParams.Parameters.Add(parameter);
-        }
-
-        SqlConnection dbConnection = new SqlConnection(_connectionString);
-        dbConnection.Open();
-
-        commandWithParams.Connection = dbConnection;
-
-        int rowsAffected = commandWithParams.ExecuteNonQuery();
-
-        dbConnection.Close();
-
-        return rowsAffected > 0;
+    public T LoadDataSingleWithParameters<T>(string sql, DynamicParameters parameters)
+    {
+        IDbConnection dbConnection = new SqlConnection(_connectionString);
+        return dbConnection.QuerySingle<T>(sql, parameters);
     }
 }
