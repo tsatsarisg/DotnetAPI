@@ -31,9 +31,6 @@ builder.Services.AddCors((options) =>
     });
 });
 
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-
-
 var tokenString = builder.Configuration.GetSection("AppSettings:TokenKey").Value;
 var tokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenString ?? ""));
 var parameters = new TokenValidationParameters()

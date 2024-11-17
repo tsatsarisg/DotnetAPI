@@ -11,20 +11,20 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace DotnetAPI.Helpers;
 
-public class AuthHelper
+ public class AuthHelper
 {
     private readonly IConfiguration _config;
     private readonly DataContextDapper _dapper;
+
     public AuthHelper(IConfiguration config)
     {
-        _config = config;
         _dapper = new DataContextDapper(config);
+        _config = config;
     }
-    
     public byte[] GetPasswordHash(string password, byte[] passwordSalt)
     {
         string passwordSaltPlusString = _config.GetSection("AppSettings:PasswordKey").Value +
-                                        Convert.ToBase64String(passwordSalt);
+            Convert.ToBase64String(passwordSalt);
 
         return KeyDerivation.Pbkdf2(
             password: password,
@@ -35,35 +35,44 @@ public class AuthHelper
         );
     }
 
+
     public string CreateToken(int userId)
     {
-        var claims = new Claim[]
-        {
+        Claim[] claims = new Claim[] {
             new Claim("userId", userId.ToString())
         };
+        
+        string? tokenKeyString = _config.GetSection("AppSettings:TokenKey").Value;
 
-        var tokenString = _config.GetSection("AppSettings:TokenKey").Value;
-        
-        var tokenKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenString ?? ""));
-        
-        var credentials = new SigningCredentials(tokenKey, SecurityAlgorithms.HmacSha256Signature);
-        var descriptor = new SecurityTokenDescriptor()
-        {
-            Subject = new ClaimsIdentity(claims),
-            SigningCredentials = credentials,
-            Expires = DateTime.Now.AddHours(1),
-        };
-        
-        var handler = new JwtSecurityTokenHandler();
-        
-        var token = handler.CreateToken(descriptor);
-        
-        return handler.WriteToken(token);
+        SymmetricSecurityKey tokenKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(
+                    tokenKeyString != null ? tokenKeyString : ""
+                )
+            );
+
+        SigningCredentials credentials = new SigningCredentials(
+                tokenKey, 
+                SecurityAlgorithms.HmacSha512Signature
+            );
+
+        SecurityTokenDescriptor descriptor = new SecurityTokenDescriptor()
+            {
+                Subject = new ClaimsIdentity(claims),
+                SigningCredentials = credentials,
+                Expires = DateTime.Now.AddDays(1)
+            };
+
+        JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+
+        SecurityToken token = tokenHandler.CreateToken(descriptor);
+
+        return tokenHandler.WriteToken(token);
+
     }
-    
+
     public bool SetPassword(UserForLoginDto userForSetPassword)
     {
-            
+        
         byte[] passwordSalt = new byte[128 / 8];
         using (RandomNumberGenerator rng = RandomNumberGenerator.Create())
         {
@@ -72,11 +81,16 @@ public class AuthHelper
 
         byte[] passwordHash = GetPasswordHash(userForSetPassword.Password, passwordSalt);
 
+        Console.WriteLine("0x" + BitConverter.ToString(passwordHash).Replace("-",""));
+        Console.WriteLine(System.Text.Encoding.UTF8.GetString(passwordHash, 0, passwordHash.Length));
+        Console.WriteLine(System.Text.Encoding.UTF8.GetString(passwordHash));
+        Console.WriteLine(Convert.ToBase64String(passwordHash));
+
         string sqlAddAuth = @"EXEC TutorialAppSchema.spRegistration_Upsert
-                @Email = @EmailParam, 
-                @PasswordHash = @PasswordHashParam, 
-                @PasswordSalt = @PasswordSaltParam";
-            
+            @Email = @EmailParam, 
+            @PasswordHash = @PasswordHashParam, 
+            @PasswordSalt = @PasswordSaltParam";
+        
         DynamicParameters sqlParameters = new DynamicParameters();
 
         // SqlParameter emailParameter = new SqlParameter("@EmailParam", SqlDbType.VarChar);
@@ -89,4 +103,6 @@ public class AuthHelper
 
         return _dapper.ExecuteSqlWithParameters(sqlAddAuth, sqlParameters);
     }
+
+    
 }
